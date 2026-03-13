@@ -1,13 +1,16 @@
 package ch.hftm.blog.messaging;
 
 public class ValidationRequest {
-    public Long blogId;
+    public String entityType;   // "BLOG" oder "COMMENT"
+    public Long entityId;
     public String text;
 
-    public ValidationRequest() {}
+    public ValidationRequest() {
+    }
 
-    public ValidationRequest(Long blogId, String text) {
-        this.blogId = blogId;
+    public ValidationRequest(String entityType, Long entityId, String text) {
+        this.entityType = entityType;
+        this.entityId = entityId;
         this.text = text;
     }
 }

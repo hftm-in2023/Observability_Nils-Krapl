@@ -1,7 +1,6 @@
 package ch.hftm.validator.messaging;
 
 import io.smallrye.common.annotation.Blocking;
-import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -17,21 +16,24 @@ public class ValidationProcessor {
             "idiot",
             "stupid",
             "offensive",
-            "scam");
+            "scam"
+    );
 
     @Incoming("validation-requests")
     @Outgoing("validation-responses")
-    @Blocking // ✅ hier erlaubt, weil Entry-Point
+    @Blocking
     public ValidationResponse process(ValidationRequest req) {
-
-        System.out.println("Request: " + req);
-
         String text = req.text == null ? "" : req.text;
         String lower = text.toLowerCase();
 
         boolean approved = BLOCKLIST.stream().noneMatch(lower::contains);
         String reason = approved ? "OK" : "Blocked by content policy";
 
-        return new ValidationResponse(req.blogId, approved, reason);
+        return new ValidationResponse(
+                req.entityType,
+                req.entityId,
+                approved,
+                reason
+        );
     }
 }

@@ -18,9 +18,18 @@ public class ValidationResponseConsumer {
     private final Jsonb jsonb = JsonbBuilder.create();
 
     @Incoming("validation-responses")
-    @Blocking // wichtig: JPA/DB ist blocking
+    @Blocking
     public void onMessage(String payload) {
         ValidationResponse response = jsonb.fromJson(payload, ValidationResponse.class);
-        blogService.applyValidationResult(response.blogId, response.approved, response.reason);
+
+        if (!"BLOG".equals(response.entityType)) {
+            return;
+        }
+
+        blogService.applyValidationResult(
+                response.entityId,
+                response.approved,
+                response.reason
+        );
     }
 }

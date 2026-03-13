@@ -1,14 +1,17 @@
 package ch.hftm.blog.messaging;
 
 public class ValidationResponse {
-    public Long blogId;
+    public String entityType;   // "BLOG" oder "COMMENT"
+    public Long entityId;
     public boolean approved;
     public String reason;
 
-    public ValidationResponse() {}
+    public ValidationResponse() {
+    }
 
-    public ValidationResponse(Long blogId, boolean approved, String reason) {
-        this.blogId = blogId;
+    public ValidationResponse(String entityType, Long entityId, boolean approved, String reason) {
+        this.entityType = entityType;
+        this.entityId = entityId;
         this.approved = approved;
         this.reason = reason;
     }

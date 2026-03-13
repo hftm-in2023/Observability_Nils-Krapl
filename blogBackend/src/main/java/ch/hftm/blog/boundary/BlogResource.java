@@ -34,7 +34,7 @@ public class BlogResource {
     @POST
     public Response create(Blog blog) {
         Blog created = blogService.create(blog); // TX endet nach Rückgabe
-        producer.send(new ValidationRequest(created.id, created.content)); // OUTSIDE TX
+        producer.send(new ValidationRequest("BLOG", created.id, created.content)); // OUTSIDE TX
         return Response.status(201).entity(created).build();
     }
 
