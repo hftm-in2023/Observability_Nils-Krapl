@@ -56,7 +56,7 @@ services:
       - redpanda
 
   blogbackend:
-    image: ghcr.io/nilskra/pu-messaging-streaming-vs2-blogbackend:1.0.1
+    image: ghcr.io/nilskra/pu-messaging-streaming-vs2-blogbackend:1.0.5
     container_name: vs2-blogbackend
     environment:
       QUARKUS_PROFILE: prod
@@ -73,7 +73,7 @@ services:
         condition: service_started
 
   validator:
-    image: ghcr.io/nilskra/pu-messaging-streaming-vs2-validator:1.0.2
+    image: ghcr.io/nilskra/pu-messaging-streaming-vs2-validator:1.0.5
     container_name: vs2-validator
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "redpanda:9092"
@@ -91,8 +91,8 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
-      - blogBackend
-      - text-validation-service
+      - blogbackend
+      - validator
 
 volumes:
   mysql_data:
