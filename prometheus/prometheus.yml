@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: blog-backend
+    metrics_path: /q/metrics
+    static_configs:
+      - targets: ["blogBackend:8080"]
+
+  - job_name: text-validator
+    metrics_path: /q/metrics
+    static_configs:
+      - targets: ["text-validation-service:8081"]

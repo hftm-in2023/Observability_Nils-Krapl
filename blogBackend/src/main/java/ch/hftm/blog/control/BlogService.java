@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import ch.hftm.blog.entity.Blog;
 import ch.hftm.blog.entity.BlogStatus;
+import ch.hftm.blog.metrics.BlogMetrics;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -15,21 +16,31 @@ public class BlogService {
     @Inject
     BlogRepository blogRepository;
 
+    @Inject
+    BlogMetrics blogMetrics;
+
     @Transactional
     public Blog create(Blog blog) {
         blog.status = BlogStatus.PENDING;
         blog.persist();
+        blogMetrics.incrementBlogCreated();
         return blog;
     }
 
     @Transactional
     public void applyValidationResult(Long blogId, boolean approved, String reason) {
         Blog blog = blogRepository.findById(blogId);
-        if (blog == null)
+        if (blog == null) {
             return;
+        }
 
         blog.status = approved ? BlogStatus.APPROVED : BlogStatus.REJECTED;
-        // optional: reason speichern (z.B. blog.validationReason)
+
+        if (approved) {
+            blogMetrics.incrementApproved();
+        } else {
+            blogMetrics.incrementRejected();
+        }
     }
 
     public Blog getBlog(long id) {

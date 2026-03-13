@@ -83,5 +83,16 @@ services:
       redpanda:
         condition: service_started
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - blogBackend
+      - text-validation-service
+
 volumes:
   mysql_data:
