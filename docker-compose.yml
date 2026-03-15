@@ -101,6 +101,10 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -114,3 +118,4 @@ services:
 
 volumes:
   mysql_data:
+  grafana_data:
