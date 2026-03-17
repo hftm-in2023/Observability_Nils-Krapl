@@ -2,6 +2,7 @@ package ch.hftm.validator.messaging;
 
 import io.micrometer.core.instrument.Timer;
 import io.smallrye.common.annotation.Blocking;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -27,23 +28,32 @@ public class ValidationProcessor {
             "scam");
 
     @Incoming("validation-requests")
-@Outgoing("validation-responses")
-@Blocking
-public ValidationResponse process(ValidationRequest req) {
+    @Outgoing("validation-responses")
+    @Blocking
+    public ValidationResponse process(ValidationRequest req) {
 
-    validationMetrics.validationRequested();
-    Timer.Sample sample = Timer.start();
+        Log.infof("Received validation request for entityType=%s, entityId=%d", req.entityType, req.entityId);
 
-    try {
-        String text = req.text == null ? "" : req.text;
-        String lower = text.toLowerCase();
+        validationMetrics.validationRequested();
+        Timer.Sample sample = Timer.start();
 
-        boolean approved = BLOCKLIST.stream().noneMatch(lower::contains);
-        String reason = approved ? "OK" : "Blocked by content policy";
+        try {
+            String text = req.text == null ? "" : req.text;
+            String lower = text.toLowerCase();
 
-        return new ValidationResponse(req.entityType, req.entityId, approved, reason);
-    } finally {
-        sample.stop(validationMetrics.timer());
+            boolean approved = BLOCKLIST.stream().noneMatch(lower::contains);
+            String reason = approved ? "OK" : "Blocked by content policy";
+
+            if (approved) {
+                Log.infof("Validation approved for entityId=%d", req.entityId);
+            } else {
+                Log.warnf("Validation rejected for entityId=%d", req.entityId);
+            }
+
+            return new ValidationResponse(req.entityType, req.entityId, approved, reason);
+        } finally {
+            sample.stop(validationMetrics.timer());
+            Log.infof("Finished validation for entityId=%d", req.entityId);
+        }
     }
-}
 }

@@ -1,7 +1,7 @@
 package ch.hftm.validator.messaging;
 
 public class ValidationResponse {
-    public String entityType;   // "BLOG" oder "COMMENT"
+    public String entityType;
     public Long entityId;
     public boolean approved;
     public String reason;
