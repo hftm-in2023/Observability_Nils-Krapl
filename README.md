@@ -1,27 +1,47 @@
 # pu-messaging-streaming
 
-Kleines Beispielprojekt für **Event-driven Communication** mit **Quarkus** und **Kafka/Redpanda**.
+Kleines Beispielprojekt für **Event-driven Communication** mit **Quarkus**, **Kafka/Redpanda** und einem kleinen **Observability-Stack** mit **Prometheus** und **Grafana**.
+
+---
 
 ## Architektur
 
-**blogBackend** (REST + MySQL) erstellt Blogposts und publiziert nach dem Speichern eine Validierungsanfrage an Kafka.
-Der **text-validation-service** konsumiert diese Anfrage, prüft den Text (Blocklist) und publiziert das Ergebnis zurück.
-Das **blogBackend** konsumiert die Antwort und setzt den Status des Blogposts entsprechend.
+- **blogBackend** (REST + MySQL)  
+  erstellt Blogposts und publiziert nach dem Speichern eine Validierungsanfrage an Kafka  
 
-**Kafka Topics**
+- **text-validation-service**  
+  konsumiert diese Anfrage, prüft den Text anhand einer Blocklist und publiziert das Ergebnis zurück  
 
-* `blog-validation-request` – Validierungsanfragen (JSON String)
-* `blog-validation-response` – Validierungsergebnisse (JSON String)
+- **blogBackend**  
+  konsumiert die Antwort und setzt den Status des Blogposts entsprechend  
+
+Zusätzlich:
+- Metriken
+- Health Checks
+- Monitoring
+
+---
+
+## Kafka Topics
+
+- `blog-validation-request` – Validierungsanfragen (JSON String)  
+- `blog-validation-response` – Validierungsergebnisse (JSON String)  
+
+---
 
 ## Services & Ports (docker-compose)
 
 | Service | Zweck | Port (Host → Container) |
-|---|---|---|
+|--------|------|--------------------------|
 | MySQL | Persistenz für blogBackend | `3306 → 3306` |
 | Redpanda | Kafka-compatible Broker | `9092 → 9092` |
 | Redpanda Console | Kafka UI | `8088 → 8080` |
 | blogBackend | REST API | `8080 → 8080` |
-| text-validation-service | Validator | `8081 → 8081` |
+| text-validation-service | Validator REST / Health / Metrics | `8081 → 8081` |
+| Prometheus | Sammeln der Metrics | `9090 → 9090` |
+| Grafana | Visualisierung der Metrics | `3000 → 3000` |
+
+---
 
 ## Quickstart (alles via Docker)
 
@@ -29,15 +49,19 @@ Das **blogBackend** konsumiert die Antwort und setzt den Status des Blogposts en
 docker compose up -d
 ```
 
-Danach:
+Danach sind die Komponenten unter folgenden URLs erreichbar:
 
-* REST API: `http://localhost:8080`
-* Validator: `http://localhost:8081`
-* Redpanda Console: `http://localhost:8088`
+- REST API blogBackend: http://localhost:8080  
+- text-validation-service: http://localhost:8081  
+- Redpanda Console: http://localhost:8088  
+- Prometheus: http://localhost:9090  
+- Grafana: http://localhost:3000  
 
-### Beispiel-Flow
+---
 
-1) Blogpost erstellen (Status startet als `PENDING`):
+## Beispiel-Flow
+
+### 1) Blogpost erstellen (Status: PENDING)
 
 ```bash
 curl -s -X POST http://localhost:8080/blogs \
@@ -45,22 +69,110 @@ curl -s -X POST http://localhost:8080/blogs \
   -d '{"title":"Hallo","content":"Das ist sauberer Content."}'
 ```
 
-2) Blogpost abfragen (nach kurzer Zeit wird `status` zu `APPROVED` oder `REJECTED`):
+### 2) Blogpost abfragen
 
 ```bash
 curl -s http://localhost:8080/blogs/1
 ```
 
-3) Nur freigegebene Blogs listen:
+### 3) Alle freigegebenen Blogs listen
 
 ```bash
 curl -s http://localhost:8080/blogs
 ```
 
-> Tipp: In der Redpanda Console (8088) kannst du die Topics und Nachrichten live ansehen.
+---
+
+## Weitere nützliche Curl-Requests
+
+### APPROVED
+
+```bash
+curl -s -X POST http://localhost:8080/blogs \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Freigegebener Post","content":"Dies ist ein unkritischer Text ohne verbotene Begriffe."}'
+```
+
+### REJECTED
+
+```bash
+curl -s -X POST http://localhost:8080/blogs \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Abgelehnter Post","content":"Dieser Inhalt enthält ein verbotenes Wort. (scam)"}'
+```
+
+---
+
+## Health Checks
+
+```bash
+curl -s http://localhost:8080/q/health
+curl -s http://localhost:8081/q/health
+```
+
+---
+
+## Metrics
+
+```bash
+curl -s http://localhost:8080/q/metrics
+curl -s http://localhost:8081/q/metrics
+```
+
+---
+
+## Grafana
+
+### Zugriff
+http://localhost:3000  
+
+### Standard Login
+* Benutzer: admin
+* Passwort: admin
+
+### Typische Inhalte des Dashboards
+* Request Count
+* HTTP Request Duration
+* Validation Requests
+* Validation Results (APPROVED / REJECTED)
+* Error Rate
+* Service Health / Verfügbarkeit
+
+Im Dashboard kannst du beobachten, wie sich Requests und Validierungen verändern, während du die Curl-Requests ausführst.
+
+---
+
+## Beobachtung des Event-Flows
+
+### Redpanda Console
+http://localhost:8088  
+
+### Dort kannst du live prüfen:
+* ob Nachrichten im Topic blog-validation-request ankommen
+* ob Antworten im Topic blog-validation-response veröffentlicht werden
+* ob der Validator korrekt konsumiert und produziert
+
+---
 
 ## Troubleshooting
 
-* **MySQL ist noch nicht ready**: `docker compose ps` prüfen – der `blogbackend` Service hängt am `mysql` Healthcheck.
-* **Keine Messages in Kafka**: In der Redpanda Console prüfen, ob `blog-validation-request` / `blog-validation-response` existieren.
-* **Status bleibt PENDING**: Validator läuft? (Container `vs2-validator`) und `KAFKA_BOOTSTRAP_SERVERS` korrekt gesetzt?
+### Keine Messages in Kafka
+* Redpanda Console prüfen
+* Existieren die Topics?
+
+### Status bleibt PENDING
+* Läuft der Validator?
+* Ist die Kafka-Verbindung korrekt?
+
+### Grafana zeigt keine Daten
+* Läuft Prometheus?
+* Ist Prometheus als Data Source konfiguriert?
+
+
+### Logs prüfen
+```bash
+docker compose logs blogbackend
+docker compose logs text-validation-service
+docker compose logs prometheus
+docker compose logs grafana
+```
