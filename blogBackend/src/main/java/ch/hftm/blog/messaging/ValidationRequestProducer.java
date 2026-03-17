@@ -7,6 +7,8 @@ import jakarta.json.bind.JsonbBuilder;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 
+import io.quarkus.logging.Log;
+
 @ApplicationScoped
 public class ValidationRequestProducer {
 
@@ -17,6 +19,7 @@ public class ValidationRequestProducer {
     private final Jsonb jsonb = JsonbBuilder.create();
 
     public void send(ValidationRequest request) {
+        Log.infof("Sending validation request for entityType=%s, entityId=%d", request.entityType, request.entityId);
         emitter.send(jsonb.toJson(request));
     }
 }
