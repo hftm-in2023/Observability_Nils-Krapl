@@ -40,6 +40,7 @@ Zusätzlich:
 | text-validation-service | Validator REST / Health / Metrics | `8081 → 8081` |
 | Prometheus | Sammeln der Metrics | `9090 → 9090` |
 | Grafana | Visualisierung der Metrics | `3000 → 3000` |
+| Jaeger | Distributed Tracing (OpenTelemetry Collector + UI) | `16686, 4317, 4318` |
 
 ---
 
@@ -56,6 +57,7 @@ Danach sind die Komponenten unter folgenden URLs erreichbar:
 - Redpanda Console: http://localhost:8088  
 - Prometheus: http://localhost:9090  
 - Grafana: http://localhost:3000  
+- Jaeger: http://localhost:16686
 
 ---
 
@@ -139,6 +141,21 @@ http://localhost:3000
 * Service Health / Verfügbarkeit
 
 Im Dashboard kannst du beobachten, wie sich Requests und Validierungen verändern, während du die Curl-Requests ausführst.
+
+---
+
+## Jaeger
+
+### Zugriff
+http://localhost:16686
+
+### Was wird getraced?
+* Beim Ausführen eines Requests (z. B. POST /blogs) entsteht ein Trace mit mehreren Spans:
+* HTTP Request im blogbackend
+* Kafka Publish (blog-validation-request)
+* Verarbeitung im validator
+* Kafka Response (blog-validation-response)
+* Update des Blog-Status
 
 ---
 
