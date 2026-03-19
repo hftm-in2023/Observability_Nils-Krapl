@@ -1,4 +1,4 @@
-# pu-messaging-streaming
+# Observability Nils Krapl
 
 Kleines Beispielprojekt für **Event-driven Communication** mit **Quarkus**, **Kafka/Redpanda** und einem kleinen **Observability-Stack** mit **Prometheus** und **Grafana**.
 
